@@ -10,13 +10,28 @@ jobs:
 
     steps:
 
+      #################################
+      # OPTIONAL DELAY (ANTI CHEAT WINDOW)
+      #################################
+
       - name: Wait 30 minutes before judging
         run: Start-Sleep -Seconds 1800
+
+
+      #################################
+      # CHECKOUT
+      #################################
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
+      #################################
+      # INIT SCORE
+      #################################
+
       - name: Initialize score
+        shell: pwsh
         run: echo "SCORE=0" >> $env:GITHUB_ENV
 
 
@@ -25,8 +40,10 @@ jobs:
       #################################
 
       - name: Detect Solution File (+10)
+        shell: pwsh
         run: |
-          if (Get-ChildItem -Recurse *.sln) {
+          if (Get-ChildItem -Recurse -Filter *.sln) {
+            echo "Solution detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
@@ -36,45 +53,53 @@ jobs:
       #################################
 
       - name: Build Project (+20)
+        shell: pwsh
         run: |
-          $sln = Get-ChildItem -Recurse *.sln | Select-Object -First 1
+          $sln = Get-ChildItem -Recurse -Filter *.sln | Select-Object -First 1
           if ($sln) {
             dotnet build $sln.FullName
             if ($LASTEXITCODE -eq 0) {
+              echo "Build success"
               echo "SCORE=$(($env:SCORE+20))" >> $env:GITHUB_ENV
             }
           }
 
 
       #################################
-      # DETECT WINDOWS FORMS
+      # DETECT WINFORMS
       #################################
 
       - name: Detect WinForms Usage (+5)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "System.Windows.Forms" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "System.Windows.Forms" -Quiet) {
+            echo "WinForms detected"
             echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # LOGIN FORM DETECTION
+      # LOGIN FORM
       #################################
 
       - name: Detect Login Form (+10)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "login" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "login" -Quiet) {
+            echo "Login detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # ROLE-BASED ACCESS
+      # ROLE ACCESS
       #################################
 
-      - name: Detect Role Access Logic (+5)
+      - name: Detect Role Logic (+5)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "role" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "role" -Quiet) {
+            echo "Role logic detected"
             echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
           }
 
@@ -84,112 +109,142 @@ jobs:
       #################################
 
       - name: Detect Barang CRUD (+10)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "barang" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "barang" -Quiet) {
+            echo "Barang module detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # TRANSAKSI MASUK
+      # BARANG MASUK
       #################################
 
       - name: Detect Barang Masuk (+10)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "masuk" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "masuk" -Quiet) {
+            echo "Barang masuk detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # TRANSAKSI KELUAR
+      # BARANG KELUAR
       #################################
 
       - name: Detect Barang Keluar (+10)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "keluar" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "keluar" -Quiet) {
+            echo "Barang keluar detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # SQL JOIN DETECTION
+      # SQL JOIN
       #################################
 
       - name: Detect SQL JOIN (+10)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "JOIN" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "JOIN" -Quiet) {
+            echo "SQL JOIN detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # AGGREGATE FUNCTION DETECTION
+      # AGGREGATE QUERY
       #################################
 
       - name: Detect Aggregate Query (+5)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "SUM(" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "SUM(" -Quiet) {
+            echo "Aggregate query detected"
             echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # CHART REPORT DETECTION
+      # CHART
       #################################
 
       - name: Detect Chart Component (+10)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "Chart" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "Chart" -Quiet) {
+            echo "Chart detected"
             echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # SEARCH FEATURE DETECTION
+      # SEARCH
       #################################
 
       - name: Detect Search Feature (+5)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "search" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "search" -Quiet) {
+            echo "Search detected"
             echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # FILTER FEATURE DETECTION
+      # FILTER
       #################################
 
       - name: Detect Filter Feature (+5)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "filter" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "filter" -Quiet) {
+            echo "Filter detected"
             echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # EXCEL IMPORT DETECTION
+      # EXCEL IMPORT
       #################################
 
-      - name: Detect Excel Import Feature (+5)
+      - name: Detect Excel Import (+5)
+        shell: pwsh
         run: |
-          if (Select-String -Path *.cs -Pattern "Excel" -Recurse -ErrorAction SilentlyContinue) {
+          if (Get-ChildItem -Recurse -Filter *.cs | Select-String -Pattern "Excel" -Quiet) {
+            echo "Excel import detected"
             echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
           }
 
 
       #################################
-      # FINAL SCORE OUTPUT
+      # FINAL SCORE
       #################################
 
       - name: Print final score
+        shell: pwsh
         run: |
           echo "FINAL_SCORE=$env:SCORE"
           echo "Score: $env:SCORE / 100"
 
+
+      #################################
+      # SAVE SCORE FILE
+      #################################
+
       - name: Save score artifact
+        shell: pwsh
         run: |
           echo "Score: $env:SCORE / 100" > score.txt
+
+
+      #################################
+      # UPLOAD ARTIFACT
+      #################################
 
       - name: Upload score
         uses: actions/upload-artifact@v4
@@ -197,7 +252,13 @@ jobs:
           name: autojudge-score
           path: score.txt
 
+
+      #################################
+      # SUMMARY OUTPUT
+      #################################
+
       - name: Summary output
+        shell: pwsh
         run: |
           echo "## 🏁 Auto Judge Result" >> $env:GITHUB_STEP_SUMMARY
           echo "Final Score: **$env:SCORE / 100**" >> $env:GITHUB_STEP_SUMMARY
