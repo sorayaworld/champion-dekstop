@@ -1,0 +1,203 @@
+name: LKS Desktop Auto Judge (Structure Agnostic)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  judge:
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Wait 30 minutes before judging
+        run: Start-Sleep -Seconds 1800
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize score
+        run: echo "SCORE=0" >> $env:GITHUB_ENV
+
+
+      #################################
+      # DETECT .NET SOLUTION
+      #################################
+
+      - name: Detect Solution File (+10)
+        run: |
+          if (Get-ChildItem -Recurse *.sln) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # BUILD PROJECT
+      #################################
+
+      - name: Build Project (+20)
+        run: |
+          $sln = Get-ChildItem -Recurse *.sln | Select-Object -First 1
+          if ($sln) {
+            dotnet build $sln.FullName
+            if ($LASTEXITCODE -eq 0) {
+              echo "SCORE=$(($env:SCORE+20))" >> $env:GITHUB_ENV
+            }
+          }
+
+
+      #################################
+      # DETECT WINDOWS FORMS
+      #################################
+
+      - name: Detect WinForms Usage (+5)
+        run: |
+          if (Select-String -Path *.cs -Pattern "System.Windows.Forms" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # LOGIN FORM DETECTION
+      #################################
+
+      - name: Detect Login Form (+10)
+        run: |
+          if (Select-String -Path *.cs -Pattern "login" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # ROLE-BASED ACCESS
+      #################################
+
+      - name: Detect Role Access Logic (+5)
+        run: |
+          if (Select-String -Path *.cs -Pattern "role" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # MASTER DATA BARANG
+      #################################
+
+      - name: Detect Barang CRUD (+10)
+        run: |
+          if (Select-String -Path *.cs -Pattern "barang" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # TRANSAKSI MASUK
+      #################################
+
+      - name: Detect Barang Masuk (+10)
+        run: |
+          if (Select-String -Path *.cs -Pattern "masuk" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # TRANSAKSI KELUAR
+      #################################
+
+      - name: Detect Barang Keluar (+10)
+        run: |
+          if (Select-String -Path *.cs -Pattern "keluar" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # SQL JOIN DETECTION
+      #################################
+
+      - name: Detect SQL JOIN (+10)
+        run: |
+          if (Select-String -Path *.cs -Pattern "JOIN" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # AGGREGATE FUNCTION DETECTION
+      #################################
+
+      - name: Detect Aggregate Query (+5)
+        run: |
+          if (Select-String -Path *.cs -Pattern "SUM(" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # CHART REPORT DETECTION
+      #################################
+
+      - name: Detect Chart Component (+10)
+        run: |
+          if (Select-String -Path *.cs -Pattern "Chart" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+10))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # SEARCH FEATURE DETECTION
+      #################################
+
+      - name: Detect Search Feature (+5)
+        run: |
+          if (Select-String -Path *.cs -Pattern "search" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # FILTER FEATURE DETECTION
+      #################################
+
+      - name: Detect Filter Feature (+5)
+        run: |
+          if (Select-String -Path *.cs -Pattern "filter" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # EXCEL IMPORT DETECTION
+      #################################
+
+      - name: Detect Excel Import Feature (+5)
+        run: |
+          if (Select-String -Path *.cs -Pattern "Excel" -Recurse -ErrorAction SilentlyContinue) {
+            echo "SCORE=$(($env:SCORE+5))" >> $env:GITHUB_ENV
+          }
+
+
+      #################################
+      # FINAL SCORE OUTPUT
+      #################################
+
+      - name: Print final score
+        run: |
+          echo "FINAL_SCORE=$env:SCORE"
+          echo "Score: $env:SCORE / 100"
+
+      - name: Save score artifact
+        run: |
+          echo "Score: $env:SCORE / 100" > score.txt
+
+      - name: Upload score
+        uses: actions/upload-artifact@v4
+        with:
+          name: autojudge-score
+          path: score.txt
+
+      - name: Summary output
+        run: |
+          echo "## 🏁 Auto Judge Result" >> $env:GITHUB_STEP_SUMMARY
+          echo "Final Score: **$env:SCORE / 100**" >> $env:GITHUB_STEP_SUMMARY
